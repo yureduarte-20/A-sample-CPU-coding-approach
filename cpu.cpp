@@ -20,10 +20,10 @@ const short REG1 = 1;
 const short REG2 = 2;
 const short REG3 = 3;
 
-void complemento_de_2(bool *v, int word_size);
-void complemento_de_2(bool *v);
-void toBits(int a, bool *v, int len);
-int toInt(bool v[]);
+void two_complement(bool *v, int word_size);
+void two_complement(bool *v);
+void to_bits(int a, bool *v, int len);
+int to_int(bool v[]);
 void print(bool[]);
 void cpy(bool*, bool*, int);
 
@@ -44,7 +44,7 @@ public:
             elements[i] = new Data();
         }
     }
-    Data *acesso(const char type, unsigned int adress)
+    Data *access(const char type, unsigned int adress)
     {
         if (type == READ && adress < array_memory_size)
         {
@@ -52,7 +52,7 @@ public:
         }
         return 0;
     }
-    void acesso(const char type, unsigned int adress, Data *data)
+    void access(const char type, unsigned int adress, Data *data)
     {
         if (type == WRITE && adress < array_memory_size)
         {
@@ -77,7 +77,7 @@ public:
     IntegerNumber(int num) : Data()
     {
         number_bits = new bool[word_size];
-        toBits(num, number_bits, word_size);
+        to_bits(num, number_bits, word_size);
     }
     bool *number_bits;
 };
@@ -143,11 +143,11 @@ public:
         this->mem_ref = m;
     }
     MBR() {}
-    void setMemRef(Memory *m)
+    void set_mem_ref(Memory *m)
     {
         this->mem_ref = m;
     }
-    void setMar(MAR *mar)
+    void set_mar(MAR *mar)
     {
         this->mar = mar;
     }
@@ -155,9 +155,9 @@ public:
     {
         return d;
     }
-    void getElementOnMemory()
+    void get_element_in_MAR()
     {
-        d = mem_ref->acesso(mar->type, mar->adress);
+        d = mem_ref->access(mar->type, mar->adress);
     }
 
 private:
@@ -169,7 +169,7 @@ class ULA
 {
 
 private:
-    void some(bool a[], bool b[], int word_size, bool *f)
+    void _add(bool a[], bool b[], int word_size, bool *f)
     {
         this->overflow = false;
         bool sum = false;
@@ -181,10 +181,10 @@ private:
             carry = (a[i] & b[i]) | (carry & (a[i] ^ b[i]));
             f[i] = sum;
         }
-        if ( (toInt(a) > 0) && (toInt(b) > 0)  == (toInt(f)  < 0 ) || toInt(f) == -128 )
+        if ( (to_int(a) > 0) && (to_int(b) > 0)  == (to_int(f)  < 0 ) || to_int(f) == -128 )
         { // regra do overflow
             this->overflow = true;
-        } else if ( (toInt(a) < 0) && (toInt(b) < 0)  == (toInt(f)  > 0) || toInt(f) == -128){
+        } else if ( (to_int(a) < 0) && (to_int(b) < 0)  == (to_int(f)  > 0) || to_int(f) == -128){
             this->overflow = true;
         }
     }
@@ -193,7 +193,7 @@ public:
     bool overflow;
     void add(bool op_a[], bool op_b[], bool *res, int tam)
     {
-        this->some(op_a, op_b, tam, res);
+        this->_add(op_a, op_b, tam, res);
     }
     ULA()
     {
@@ -206,26 +206,26 @@ public:
     UC() {
         halt  = false;
     }
-    void incrementProgramCounter(unsigned int &program_counter)
+    void increment_program_counter(unsigned int &program_counter)
     {
         cout << "program counter: " << program_counter << endl;
         program_counter++;
     }
-    void getNextInstruction(MAR *mar, unsigned int &program_counter, MBR *mbr)
+    void get_next_instruction(MAR *mar, unsigned int &program_counter, MBR *mbr)
     {
         mar->adress = program_counter;
         mar->type = READ;
-        mbr->getElementOnMemory();
+        mbr->get_element_in_MAR();
     }
-    void getInstructionFromMBR(MBR *mbr)
+    void get_instruction_from_MBR(MBR *mbr)
     {
         if (Instruction *temp = dynamic_cast<Instruction *>(mbr->getData()))
         {
-            cout << "the instruction was obtained successfully and is loading in the Instruction Register" << endl;
+            cout << "the instruction was retrieved successfully and is loading in the Instruction Register" << endl;
             instructionRegister = temp;
         }
     }
-    void interpretAndExecuteInstruction(ULA *ula, Registers *registers, MAR *mar, MBR *mbr)
+    void interpret_and_execute_instruction(ULA *ula, Registers *registers, MAR *mar, MBR *mbr)
     {
         switch (instructionRegister->opCode)
         {
@@ -335,7 +335,7 @@ public:
             {
                 mar->adress = instructionRegister->ref_element_b;
                 mar->type = READ;
-                mbr->getElementOnMemory();
+                mbr->get_element_in_MAR();
                 if (IntegerNumber *number = dynamic_cast<IntegerNumber *>(mbr->getData()))
                 {
                     cpy(number->number_bits, registers->reg0, word_size);
@@ -345,7 +345,7 @@ public:
             {
                 mar->adress = instructionRegister->ref_element_b;
                 mar->type = READ;
-                mbr->getElementOnMemory();
+                mbr->get_element_in_MAR();
                 if (IntegerNumber *number = dynamic_cast<IntegerNumber *>(mbr->getData()))
                 {
                     cpy(number->number_bits, registers->reg1, word_size);
@@ -355,7 +355,7 @@ public:
             {
                 mar->type = READ;
                 mar->adress = instructionRegister->ref_element_b;
-                mbr->getElementOnMemory();
+                mbr->get_element_in_MAR();
                 if (IntegerNumber *number = dynamic_cast<IntegerNumber *>(mbr->getData()))
                 {
                     cpy(number->number_bits, registers->reg2, word_size);
@@ -365,7 +365,7 @@ public:
             {
                 mar->adress = instructionRegister->ref_element_b;
                 mar->type = READ;
-                mbr->getElementOnMemory();
+                mbr->get_element_in_MAR();
                 if (IntegerNumber *number = dynamic_cast<IntegerNumber *>(mbr->getData()))
                 {
                     cpy(number->number_bits, registers->reg3, word_size);
@@ -382,19 +382,19 @@ public:
         {
             if (instructionRegister->ref_element_a == REG0)
             {
-                cout << "OUTPUT: " << toInt(registers->reg0) << endl;
+                cout << "OUTPUT: " << to_int(registers->reg0) << endl;
             }
             else if (instructionRegister->ref_element_a == REG1)
             {
-                cout << "OUTPUT: " << toInt(registers->reg1) << endl;
+                cout << "OUTPUT: " << to_int(registers->reg1) << endl;
             }
             else if (instructionRegister->ref_element_a == REG2)
             {
-                cout << "OUTPUT: " << toInt(registers->reg2) << endl;
+                cout << "OUTPUT: " << to_int(registers->reg2) << endl;
             }
             else if (instructionRegister->ref_element_a == REG3)
             {
-                cout << "OUTPUT: " << toInt(registers->reg3) << endl;
+                cout << "OUTPUT: " << to_int(registers->reg3) << endl;
             }
         }
         break;
@@ -426,10 +426,10 @@ public:
     void run(){
         unsigned int i = 0;
         while(!uc->halt && i <= array_memory_size){
-            uc->getNextInstruction(mar, program_counter, mbr);
-            uc->incrementProgramCounter(program_counter);
-            uc->getInstructionFromMBR(mbr);
-            uc->interpretAndExecuteInstruction(ula,registers, mar, mbr);
+            uc->get_next_instruction(mar, program_counter, mbr);
+            uc->increment_program_counter(program_counter);
+            uc->get_instruction_from_MBR(mbr);
+            uc->interpret_and_execute_instruction(ula,registers, mar, mbr);
             i++;
         }
         cout << "Executed";
@@ -469,20 +469,20 @@ int main()
 
     i5->opCode = HALT;
     Memory *m = new Memory();
-    m->acesso(WRITE, 0, i);
-    m->acesso(WRITE, 1, i2);
-    m->acesso(WRITE, 2, i3);
-    m->acesso(WRITE, 3, i4);
-    m->acesso(WRITE, 4, i5);
+    m->access(WRITE, 0, i);
+    m->access(WRITE, 1, i2);
+    m->access(WRITE, 2, i3);
+    m->access(WRITE, 3, i4);
+    m->access(WRITE, 4, i5);
 
-    m->acesso(WRITE, 6, new IntegerNumber(2));
-    m->acesso(WRITE, 7, new IntegerNumber(2));
+    m->access(WRITE, 6, new IntegerNumber(2));
+    m->access(WRITE, 7, new IntegerNumber(2));
     CPU *cpu = new CPU(m);
     cpu->run();
 }
 /* Funções de Apoio */ 
 
-void complemento_de_2(bool *v, int word_size)
+void two_complement(bool *v, int word_size)
 {
     for (int i = 0; i < word_size; i++)
     {
@@ -501,7 +501,7 @@ void complemento_de_2(bool *v, int word_size)
         }
     }
 }
-void complemento_de_2(bool *v)
+void two_complement(bool *v)
 {
     for (int i = 0; i < word_size; i++)
     {
@@ -520,7 +520,7 @@ void complemento_de_2(bool *v)
         }
     }
 }
-void toBits(int a, bool *v, int len)
+void to_bits(int a, bool *v, int len)
 {
     int aux = a;
     for (int i = len - 1; i >= 0; i--)
@@ -537,10 +537,10 @@ void toBits(int a, bool *v, int len)
     }
     if (a < 0)
     {
-        complemento_de_2(v, len);
+        two_complement(v, len);
     }
 }
-int toInt(bool v[])
+int to_int(bool v[])
 {
     int res = 0;
     if (v[0] == 1)
